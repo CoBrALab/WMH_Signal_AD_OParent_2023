@@ -1,11 +1,10 @@
-# Generate graphs of WMH characteristics by age/group
+# Correlations of WMH signal and volume measures between themselves
+# First, in a between-measure within-region fashion
+# Second, in a between-region within measure fashion
 
-library(readxl)
-library(effects)
-library(RMINC)
-library(SpatioTemporal)
+# Parcellation: Periventricular / deep / superficial white matter
 
-ADB_subset = read.csv("../ADB_subset_imputed_RF_new.csv")
+ADB_subset = read.csv("../../df_pvdeepswm.csv")
 ADB_subset = ADB_subset[,-grep("NAWM", colnames(ADB_subset))]
 ADB_subset = ADB_subset[-c(60,61,62,63)]
 
@@ -16,7 +15,7 @@ colnames(ADB_subset)[-cat_vars]
 ADB_subset[,cat_vars] = lapply(ADB_subset[,cat_vars], as.factor)
 ADB_subset[,-cat_vars] = lapply(ADB_subset[,-cat_vars], as.numeric)
 
-# Subset by region
+# Make subsets by region and by measure
 ADB_subset_parc = list()
 
 ADB_subset_parc[[1]] = subset(ADB_subset, select=c("volume_WMH", "qT2star_median_WMH", "qT1_median_WMH","T1w_median_WMH", "T2w_median_WMH",
@@ -46,74 +45,56 @@ colnames(ADB_subset_parc[[10]]) = c("Global", "PV", "Deep", "SWM")
 ADB_subset_parc[[11]] = ADB_subset[,grepl("FLAIR_", names(ADB_subset))]
 colnames(ADB_subset_parc[[11]]) = c("Global", "PV", "Deep", "SWM")
 
-#names_parc = c("global_medians", "PV_medians", "deep_medians", "SWM_medians", "global_volumes_stddev", "global_medians_stddev")
 names_parc = c("global_medians", "PV_medians", "deep_medians", "SWM_medians",
                "volume", "T1", "T2star", "t1t2ratio", "T1w", "T2w", "FLAIR")
 
 # Correlation matrices
 
+# Make color palette
 mypalette = colorRampPalette(rev(c("#67001F", "#B2182B", "#D6604D", "#F4A582",
                                    "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE",
                                    "#4393C3", "#2166AC", "#053061")))
 
 library("Hmisc")
 library(corrplot)
-library(boot)
-library(bootcorci)
 
-boot.cor = function(data, i){
-  boot.cor = cor(data[i,])
-}
+dir.create("./visualization", showWarnings = FALSE)
+dir.create("./results", showWarnings = FALSE)
 
-# big ol loop
+# Between-measure within-region associations
 for (i in seq(1, 4)){
   print(names_parc[i])
 
+  # Compute correlation matrix
   corr_matrix = rcorr(as.matrix(ADB_subset_parc[[i]]), type="pearson")
   
-  png(height=1200, width=1800, pointsize=37, file=paste0("corr_matrix_pearson_", names_parc[i],".png"))
+  # Plot
+  png(height=1200, width=1800, pointsize=37, file=paste0("./visualization/bmeasure_", names_parc[i],".png"))
   corrplot(as.matrix(corr_matrix$r), type="upper", order="original", method="circle", addCoef.col = "black", addgrid.col = TRUE,
            tl.srt = 45, tl.col = "black", col=mypalette(200), diag=FALSE, tl.cex=1.5, cl.length = 5, cl.cex = 1.5, number.cex=1.3,
            p.mat=corr_matrix$P, sig.level=0.01, insig="blank")
   dev.off()
   
-  # col_names = colnames(ADB_subset_parc[[i]])
-  # 
-  # bootresults = boot(ADB_subset_parc[[i]], boot.cor, R = 5000)
-  # corr_matrix = matrix(colMeans(bootresults$t), nrow = ncol(ADB_subset_parc[[i]]), ncol = ncol(ADB_subset_parc[[i]]))
-  # 
-  # colnames(corr_matrix) = col_names
-  # rownames(corr_matrix) = col_names
-  # 
-  # png(height=1200, width=1800, pointsize=32, file=paste0("corr_matrix_pearson_", names_parc[i],".png"))
-  # corrplot(as.matrix(corr_matrix), type="upper", order="original", method="circle", addCoef.col = "black", addgrid.col = TRUE,
-  #          tl.srt = 45, tl.col = "black", col=mypalette(200), diag=FALSE, tl.cex=1.5, cl.length = 5, cl.cex = 1.5, number.cex=1.3)
-  # dev.off()
+  # Save results
+  write.csv(corr_matrix$r, paste0("./results/bmeasure_",names_parc[i],"_r.csv"), row.names = TRUE)
+  write.csv(corr_matrix$P, paste0("./results/bmeasure_",names_parc[i],"_p.csv"), row.names = TRUE)
 }
 
-# big ol loop
+# Between-region within-measure associations
 for (i in seq(5, 11)){
   print(names_parc[i])
   
+  # Compute correlation matrix
   corr_matrix = rcorr(as.matrix(ADB_subset_parc[[i]]), type="pearson")
   
-  png(height=1200, width=1800, pointsize=37, file=paste0("corr_matrix_pearson_", names_parc[i],".png"))
+  # Plot
+  png(height=1200, width=1800, pointsize=37, file=paste0("./visualization/bregion_", names_parc[i],".png"))
   corrplot(as.matrix(corr_matrix$r), type="upper", order="original", method="circle", addCoef.col = "black", addgrid.col = TRUE,
            tl.srt = 45, tl.col = "black", col=mypalette(200), diag=FALSE, tl.cex=2.5, cl.length = 5, cl.cex = 2, number.cex=2.5,
            cl.ratio = 0.3, p.mat=as.matrix(corr_matrix$P), sig.level=0.01, insig="blank")
   dev.off()
   
-  # col_names = colnames(ADB_subset_parc[[i]])
-  # 
-  # bootresults = boot(ADB_subset_parc[[i]], boot.cor, R = 5000)
-  # corr_matrix = matrix(colMeans(bootresults$t), nrow = ncol(ADB_subset_parc[[i]]), ncol = ncol(ADB_subset_parc[[i]]))
-  # 
-  # colnames(corr_matrix) = col_names
-  # rownames(corr_matrix) = col_names
-  # 
-  # png(height=1200, width=1800, pointsize=32, file=paste0("corr_matrix_pearson_", names_parc[i],".png"))
-  # corrplot(as.matrix(corr_matrix), type="upper", order="original", method="circle", addCoef.col = "black", addgrid.col = TRUE,
-  #          tl.srt = 45, tl.col = "black", col=mypalette(200), diag=FALSE, tl.cex=2.5, cl.length = 5, cl.cex = 2, number.cex=2.5,
-  #          cl.ratio = 0.3)
-  # dev.off()
+  # Save results
+  write.csv(corr_matrix$r, paste0("./results/bregion_",names_parc[i],"_r.csv"), row.names = TRUE)
+  write.csv(corr_matrix$P, paste0("./results/bregion_",names_parc[i],"_p.csv"), row.names = TRUE)
 }
