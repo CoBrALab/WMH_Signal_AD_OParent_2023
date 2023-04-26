@@ -77,7 +77,7 @@ for (xvar in x_vars){
       lm_values[nrow(lm_values)+1,] = c(colnames(ADB_subset)[xvar], colnames(ADB_subset)[yvar], "", "", "", fstat, pval, x_categ, y_categ)
     }
     
-    # If categorical x variable, do regression
+    # If continuous x variable, do regression
     else {
       cat(paste0("\n-----------\ny = ", colnames(ADB_subset)[yvar], "\nx = ", colnames(ADB_subset)[xvar], "\ncolor = Age\n-----------\n"))
 

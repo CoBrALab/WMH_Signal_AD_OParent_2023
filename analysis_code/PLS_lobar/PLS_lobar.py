@@ -223,7 +223,7 @@ y_pos = list(range(0,len(behav)))
 # Plot every significant LV
 for i in range(permres_pvals.shape[0]): # i ranges from 0 to (num_LVs – 1)
     if (permres_pvals[0][i] <= 0.05):  
-        y_load = y_loadings.iloc[i,:]
+        y_load = y_loadings.iloc[:,i]
         x_error = []
         
         # Load data
