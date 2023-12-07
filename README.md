@@ -1,6 +1,6 @@
 # Description
  
-This repository contains all analysis code and processed data to reproduce the main results for the preprint titled "Assessment of white matter hyperintensity severity using multimodal MRI in Alzheimer’s Disease" available here https://doi.org/10.1101/2023.01.20.524929.
+This repository contains all analysis code and processed data to reproduce the main results for the research article titled "Assessment of white matter hyperintensity severity using multimodal magnetic resonance imaging" published in Brain Communications in 2023 (https://doi.org/10.1093/braincomms/fcad279).
 
 Results in raw form and figures are also available for every main analysis.
 
